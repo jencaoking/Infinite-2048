@@ -2,6 +2,7 @@
   <div class="game-container" ontouchstart="handleTouchStart" ontouchend="handleTouchEnd">
     <div class="grid-wrapper">
       <div class="nav-bar">
+        <input type="button" class="about-btn" value="关于" onclick="toggleAbout" />
         <input type="button" class="exit-btn" value="退出" onclick="exitGame" />
       </div>
 
@@ -47,6 +48,14 @@
       <input type="button" class="continue-btn" value="继续挑战" onclick="continueGame" />
       <input type="button" class="overlay-btn" value="重新开始" onclick="resetGame" />
     </div>
+
+    <div class="about-overlay" if="{{ showAbout }}">
+      <text class="about-title">关于</text>
+      <text class="about-name">Infinite-2048</text>
+      <text class="about-desc">小米手表2048游戏</text>
+      <text class="about-developer">开发者: jencao</text>
+      <input type="button" class="about-close-btn" value="关闭" onclick="toggleAbout" />
+    </div>
   </div>
 </template>
 
@@ -58,6 +67,7 @@ export default {
     bestScore: 0,
     isGameOver: false,
     showWin: false,
+    showAbout: false,
     hasWonOnce: false,
     touchStartX: 0,
     touchStartY: 0,
@@ -130,18 +140,22 @@ export default {
   },
 
   handleTouchStart(e) {
-    if (this.isAnimating || this.isGameOver) return
-    if (!e.touches || e.touches.length === 0) return
+    if (this.isAnimating || this.isGameOver || this.showAbout) return
+    if (!e.touches || e.touches.length === 0 || typeof e.touches[0].x !== 'number' || typeof e.touches[0].y !== 'number') return
     this.touchStartX = e.touches[0].x
     this.touchStartY = e.touches[0].y
   },
 
   handleTouchEnd(e) {
-    if (this.isAnimating || this.isGameOver) return
-    if (!e.changedTouches || e.changedTouches.length === 0) return
+    if (this.isAnimating || this.isGameOver || this.showAbout) return
+    if (!e.changedTouches || e.changedTouches.length === 0 || typeof e.changedTouches[0].x !== 'number' || typeof e.changedTouches[0].y !== 'number') return
     const touchEndX = e.changedTouches[0].x
     const touchEndY = e.changedTouches[0].y
     this.detectSwipeDirection(touchEndX, touchEndY)
+  },
+
+  toggleAbout() {
+    this.showAbout = !this.showAbout
   },
 
   arraysEqual(a, b) {
@@ -500,6 +514,70 @@ export default {
   touch-action: manipulation;
   user-select: none;
   margin-bottom: 6px;
+}
+
+.about-btn {
+  width: 40px;
+  height: 24px;
+  background-color: #8F7A66;
+  color: #F9F6F2;
+  font-size: 9px;
+  border-radius: 4px;
+  touch-action: manipulation;
+  user-select: none;
+  margin-right: 4px;
+}
+
+.about-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(250, 248, 239, 0.95);
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+  z-index: 15;
+}
+
+.about-title {
+  font-size: 18px;
+  font-weight: bold;
+  color: #776E65;
+  margin-bottom: 8px;
+}
+
+.about-name {
+  font-size: 16px;
+  font-weight: bold;
+  color: #EDC22E;
+  margin-bottom: 6px;
+}
+
+.about-desc {
+  font-size: 11px;
+  color: #776E65;
+  margin-bottom: 6px;
+}
+
+.about-developer {
+  font-size: 11px;
+  color: #8F7A66;
+  margin-bottom: 12px;
+}
+
+.about-close-btn {
+  width: 70px;
+  height: 30px;
+  background-color: #8F7A66;
+  color: #F9F6F2;
+  font-size: 11px;
+  border-radius: 5px;
+  min-width: 44px;
+  min-height: 44px;
+  touch-action: manipulation;
+  user-select: none;
 }
 
 /* 媒体查询 - 适配小米手环10 1.72英寸屏幕 */
