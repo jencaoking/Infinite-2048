@@ -50,6 +50,7 @@
     </div>
 
     <div class="about-overlay" if="{{ showAbout }}">
+      <image class="about-logo" src="../../common/logo.png" />
       <text class="about-title">关于</text>
       <text class="about-name">Infinite-2048</text>
       <text class="about-desc">小米手表2048游戏</text>
@@ -546,6 +547,12 @@ export default {
   align-items: center;
   flex-direction: column;
   z-index: 15;
+}
+
+.about-logo {
+  width: 64px;
+  height: 64px;
+  margin-bottom: 8px;
 }
 
 .about-title {
