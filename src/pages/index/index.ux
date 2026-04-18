@@ -574,8 +574,6 @@ export default {
   color: #F9F6F2;
   font-size: 11px;
   border-radius: 5px;
-  min-width: 44px;
-  min-height: 44px;
   touch-action: manipulation;
   user-select: none;
 }
