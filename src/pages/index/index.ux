@@ -94,7 +94,6 @@ export default {
     this.hasWonOnce = false
     this.addRandomTile()
     this.addRandomTile()
-    this.updateGridStyle()
   },
 
   addRandomTile() {
@@ -109,7 +108,6 @@ export default {
     if (emptyCells.length > 0) {
       const cell = emptyCells[Math.floor(Math.random() * emptyCells.length)]
       this.grid[cell.i][cell.j] = Math.random() < 0.9 ? 2 : 4
-      this.updateGridStyle()
     }
   },
 
@@ -131,17 +129,16 @@ export default {
     return `color: ${colors.text}; font-size: ${fontSize}px;`
   },
 
-  updateGridStyle() {
-  },
-
   handleTouchStart(e) {
     if (this.isAnimating || this.isGameOver) return
+    if (!e.touches || e.touches.length === 0) return
     this.touchStartX = e.touches[0].x
     this.touchStartY = e.touches[0].y
   },
 
   handleTouchEnd(e) {
     if (this.isAnimating || this.isGameOver) return
+    if (!e.changedTouches || e.changedTouches.length === 0) return
     const touchEndX = e.changedTouches[0].x
     const touchEndY = e.changedTouches[0].y
     this.detectSwipeDirection(touchEndX, touchEndY)
@@ -212,7 +209,6 @@ export default {
       if (!this.canMove()) {
         this.isGameOver = true
       }
-      this.updateGridStyle()
     }
   },
 
@@ -267,10 +263,6 @@ export default {
       for (let j = 0; j < 4; j++) {
         if (this.grid[i][j] === 2048) {
           this.hasWonOnce = true
-          this.showWin = true
-          return
-        }
-        if (this.grid[i][j] === 20480) {
           this.showWin = true
           return
         }
