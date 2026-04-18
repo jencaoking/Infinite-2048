@@ -1,6 +1,10 @@
 <template>
   <div class="game-container" ontouchstart="handleTouchStart" ontouchend="handleTouchEnd">
     <div class="grid-wrapper">
+      <div class="nav-bar">
+        <input type="button" class="exit-btn" value="退出" onclick="exitGame" />
+      </div>
+
       <div class="header">
         <div class="score-box">
           <text class="score-label">分数</text>
@@ -37,9 +41,11 @@
     </div>
 
     <div class="win-overlay" if="{{ showWin }}">
-      <text class="win-text">🎉 20480!</text>
+      <text class="win-text">🎉 2048!</text>
       <text class="win-subtext">胜利!</text>
       <text class="win-score">得分: {{ score }}</text>
+      <input type="button" class="continue-btn" value="继续挑战" onclick="continueGame" />
+      <input type="button" class="overlay-btn" value="重新开始" onclick="resetGame" />
     </div>
   </div>
 </template>
@@ -56,7 +62,6 @@ export default {
     touchStartX: 0,
     touchStartY: 0,
     isAnimating: false,
-    gridStyle: []
   },
 
   tileColors: {
@@ -87,7 +92,6 @@ export default {
     this.isGameOver = false
     this.showWin = false
     this.hasWonOnce = false
-    this.isAnimating = false
     this.addRandomTile()
     this.addRandomTile()
     this.updateGridStyle()
@@ -122,20 +126,12 @@ export default {
     const colors = this.tileColors[value] || { bg: '#CDC1B4', text: '#F9F6F2' }
     let fontSize = 16
     if (value >= 1000) fontSize = 14
-    if (value >= 10000) fontSize = 10
+    if (value >= 10000) fontSize = 12
+    if (value >= 100000) fontSize = 10
     return `color: ${colors.text}; font-size: ${fontSize}px;`
   },
 
   updateGridStyle() {
-    const newStyle = []
-    for (let i = 0; i < 4; i++) {
-      const rowStyle = []
-      for (let j = 0; j < 4; j++) {
-        rowStyle.push(this.getTileStyle(this.grid[i][j]))
-      }
-      newStyle.push(rowStyle)
-    }
-    this.gridStyle = newStyle
   },
 
   handleTouchStart(e) {
@@ -146,9 +142,17 @@ export default {
 
   handleTouchEnd(e) {
     if (this.isAnimating || this.isGameOver) return
-    const touchEndX = e.changedTouches[0].x
-    const touchEndY = e.changedTouches[0].y
+    const touchEndX = e.touches[0].x
+    const touchEndY = e.touches[0].y
     this.detectSwipeDirection(touchEndX, touchEndY)
+  },
+
+  arraysEqual(a, b) {
+    if (a.length !== b.length) return false
+    for (let k = 0; k < a.length; k++) {
+      if (a[k] !== b[k]) return false
+    }
+    return true
   },
 
   detectSwipeDirection(endX, endY) {
@@ -176,7 +180,7 @@ export default {
   },
 
   move(direction) {
-    if (this.isAnimating || this.isGameOver) return
+    if (this.isGameOver) return
 
     let moved = false
 
@@ -184,7 +188,7 @@ export default {
       for (let i = 0; i < 4; i++) {
         const row = this.grid[i].slice()
         const result = this.processLine(row, direction === 'right')
-        if (JSON.stringify(this.grid[i]) !== JSON.stringify(result)) {
+        if (!this.arraysEqual(this.grid[i], result)) {
           moved = true
         }
         this.grid[i] = result
@@ -261,12 +265,13 @@ export default {
     if (this.hasWonOnce) return
     for (let i = 0; i < 4; i++) {
       for (let j = 0; j < 4; j++) {
-        if (this.grid[i][j] >= 20480) {
+        if (this.grid[i][j] === 2048) {
           this.hasWonOnce = true
           this.showWin = true
-          setTimeout(() => {
-            this.showWin = false
-          }, 3000)
+          return
+        }
+        if (this.grid[i][j] === 20480) {
+          this.showWin = true
           return
         }
       }
@@ -275,6 +280,14 @@ export default {
 
   resetGame() {
     this.initGame()
+  },
+
+  continueGame() {
+    this.showWin = false
+  },
+
+  exitGame() {
+    this.$app.exit()
   }
 }
 </script>
@@ -310,6 +323,24 @@ export default {
   width: 160px;
   margin-bottom: 6px;
   z-index: 1;
+}
+
+.nav-bar {
+  width: 100%;
+  justify-content: flex-end;
+  margin-bottom: 6px;
+  z-index: 1;
+}
+
+.exit-btn {
+  width: 50px;
+  height: 24px;
+  background-color: #8F7A66;
+  color: #F9F6F2;
+  font-size: 9px;
+  border-radius: 4px;
+  touch-action: manipulation;
+  user-select: none;
 }
 
 .score-box {
@@ -462,6 +493,21 @@ export default {
 .win-score {
   font-size: 12px;
   color: #776E65;
+  margin-bottom: 6px;
+}
+
+.continue-btn {
+  width: 90px;
+  height: 32px;
+  background-color: #8F7A66;
+  color: #F9F6F2;
+  font-size: 12px;
+  border-radius: 5px;
+  min-width: 44px;
+  min-height: 44px;
+  touch-action: manipulation;
+  user-select: none;
+  margin-bottom: 6px;
 }
 
 /* 媒体查询 - 适配小米手环10 1.72英寸屏幕 */
