@@ -1,5 +1,5 @@
 <template>
-  <div class="game-container" onswipe="handleSwipe">
+  <div class="game-container" ontouchstart="handleTouchStart" ontouchend="handleTouchEnd">
     <div class="grid-wrapper">
       <div class="nav-bar">
         <input type="button" class="about-btn" value="关于" onclick="toggleAbout" />
@@ -52,7 +52,8 @@
     <div class="about-overlay" if="{{ showAbout }}">
       <image class="about-logo" src="/common/logo.png" />
       <text class="about-title">关于</text>
-      <text class="about-name">Infinite-2048</text>
+      <text class="about-name">2048</text>
+      <text class="about-version">版本 1.0.0</text>
       <text class="about-desc">小米手表2048游戏</text>
       <text class="about-developer">开发者: jencao</text>
       <input type="button" class="about-close-btn" value="关闭" onclick="toggleAbout" />
@@ -72,6 +73,8 @@ export default {
     hasWonOnce: false,
     isAnimating: false,
     gridSize: 4,
+    touchStartX: 0,
+    touchStartY: 0,
   },
 
   tileColors: {
@@ -135,17 +138,48 @@ export default {
   getTileTextStyle(value) {
     if (value === 0) return ''
     const colors = this.tileColors[value] || { bg: '#CDC1B4', text: '#F9F6F2' }
-    let fontSize = 16
-    if (value >= 1000) fontSize = 14
-    if (value >= 10000) fontSize = 12
-    if (value >= 100000) fontSize = 10
+    let fontSize = 20
+    if (value >= 1000) fontSize = 18
+    if (value >= 10000) fontSize = 16
+    if (value >= 100000) fontSize = 14
     return `color: ${colors.text}; font-size: ${fontSize}px;`
   },
 
-  handleSwipe(e) {
+  handleTouchStart(e) {
     if (this.isAnimating || this.isGameOver || this.showAbout) return
-    if (!e || !e.direction) return
-    this.move(e.direction)
+    if (!e || !e.touches || e.touches.length === 0) return
+    const touch = e.touches[0]
+    if (typeof touch.clientX !== 'number' || typeof touch.clientY !== 'number') return
+    this.touchStartX = touch.clientX
+    this.touchStartY = touch.clientY
+  },
+
+  handleTouchEnd(e) {
+    if (this.isAnimating || this.isGameOver || this.showAbout) return
+    if (!e || !e.changedTouches || e.changedTouches.length === 0) return
+    const touch = e.changedTouches[0]
+    if (typeof touch.clientX !== 'number' || typeof touch.clientY !== 'number') return
+    const dx = touch.clientX - this.touchStartX
+    const dy = touch.clientY - this.touchStartY
+    const minSwipeDistance = 15
+
+    if (Math.abs(dx) < minSwipeDistance && Math.abs(dy) < minSwipeDistance) {
+      return
+    }
+
+    if (Math.abs(dx) > Math.abs(dy)) {
+      if (dx > 0) {
+        this.move('right')
+      } else {
+        this.move('left')
+      }
+    } else {
+      if (dy > 0) {
+        this.move('down')
+      } else {
+        this.move('up')
+      }
+    }
   },
 
   toggleAbout() {
@@ -307,8 +341,8 @@ export default {
 .header {
   flex-direction: row;
   justify-content: space-between;
-  width: 160px;
-  margin-bottom: 6px;
+  width: 180px;
+  margin-bottom: 8px;
   z-index: 1;
 }
 
@@ -333,18 +367,18 @@ export default {
 .score-box {
   background-color: #BBC4C9;
   border-radius: 6px;
-  padding: 4px 8px;
+  padding: 6px 12px;
   align-items: center;
-  min-width: 60px;
+  min-width: 80px;
 }
 
 .score-label {
-  font-size: 8px;
+  font-size: 12px;
   color: #EEE4DA;
 }
 
 .score-value {
-  font-size: 14px;
+  font-size: 20px;
   font-weight: bold;
   color: #FFFFFF;
 }
@@ -353,10 +387,10 @@ export default {
   flex-direction: column;
   background-color: #BBADA0;
   border-radius: 8px;
-  padding: 4px;
-  width: 160px;
-  height: 160px;
-  margin-bottom: 8px;
+  padding: 8px;
+  width: 200px;
+  height: 200px;
+  margin-bottom: 12px;
   z-index: 1;
 }
 
@@ -375,16 +409,16 @@ export default {
   flex: 1;
   justify-content: center;
   align-items: center;
-  border-radius: 3px;
+  border-radius: 4px;
   background-color: #CDC1B4;
-  min-width: 32px;
-  min-height: 32px;
-  touch-action: manipulation;
+  min-width: 38px;
+  min-height: 38px;
+  touch-action: none;
   user-select: none;
 }
 
 .tile-value {
-  font-size: 16px;
+  font-size: 24px;
   font-weight: bold;
   color: #776E65;
 }
@@ -395,15 +429,15 @@ export default {
 }
 
 .reset-btn {
-  width: 80px;
-  height: 28px;
+  width: 90px;
+  height: 34px;
   background-color: #8F7A66;
   color: #F9F6F2;
-  font-size: 10px;
+  font-size: 12px;
   border-radius: 5px;
-  min-width: 44px;
-  min-height: 44px;
-  touch-action: manipulation;
+  min-width: 50px;
+  min-height: 50px;
+  touch-action: none;
   user-select: none;
 }
 
@@ -519,22 +553,28 @@ export default {
 }
 
 .about-logo {
-  width: 64px;
-  height: 64px;
+  width: 80px;
+  height: 80px;
   margin-bottom: 8px;
 }
 
 .about-title {
-  font-size: 18px;
+  font-size: 20px;
   font-weight: bold;
   color: #776E65;
   margin-bottom: 8px;
 }
 
 .about-name {
-  font-size: 16px;
+  font-size: 18px;
   font-weight: bold;
   color: #EDC22E;
+  margin-bottom: 6px;
+}
+
+.about-version {
+  font-size: 12px;
+  color: #8F7A66;
   margin-bottom: 6px;
 }
 
@@ -561,68 +601,61 @@ export default {
   user-select: none;
 }
 
-/* 媒体查询 - 适配小米手环10 1.72英寸屏幕 */
-@media screen and (shape: rect) {
+/* 适配小屏幕手环 */
+@media screen and (max-height: 480px) {
   .game-container {
-    padding: 6px;
+    padding: 4px;
   }
-  
-  .header {
-    width: 150px;
-    margin-bottom: 4px;
-  }
-  
+
   .game-board {
-    width: 150px;
-    height: 150px;
-    padding: 3px;
+    width: 160px;
+    height: 160px;
     margin-bottom: 6px;
   }
-  
+
   .tile {
-    min-width: 28px;
-    min-height: 28px;
+    min-width: 34px;
+    min-height: 34px;
   }
-  
+
   .tile-value {
-    font-size: 14px;
+    font-size: 18px;
   }
-  
+
+  .header {
+    width: 160px;
+    margin-bottom: 4px;
+  }
+
   .reset-btn {
     width: 70px;
     height: 26px;
   }
-  
+
   .score-box {
     padding: 3px 6px;
-    min-width: 50px;
+    min-width: 55px;
   }
-  
+
   .score-label {
-    font-size: 7px;
+    font-size: 8px;
   }
-  
+
   .score-value {
+    font-size: 14px;
+  }
+
+  .game-over-text {
+    font-size: 16px;
+  }
+
+  .game-over-overlay {
     font-size: 12px;
   }
-}
 
-/* 确保在虚拟设备中正确显示 */
-@media screen and (max-height: 520px) {
-  .game-container {
-    height: 100vh;
-  }
-  
-  .grid-wrapper {
-    flex-shrink: 0;
-  }
-  
-  .game-board {
-    flex-shrink: 0;
-  }
-  
-  .footer {
-    flex-shrink: 0;
+  .about-logo {
+    width: 60px;
+    height: 60px;
   }
 }
 </style>
