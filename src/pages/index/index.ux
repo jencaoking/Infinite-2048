@@ -1,5 +1,5 @@
 <template>
-  <div class="game-container" ontouchstart="handleTouchStart" ontouchend="handleTouchEnd">
+  <div class="game-container" onswipe="handleSwipe">
     <div class="grid-wrapper">
       <div class="nav-bar">
         <input type="button" class="about-btn" value="关于" onclick="toggleAbout" />
@@ -42,7 +42,7 @@
     </div>
 
     <div class="win-overlay" if="{{ showWin }}">
-      <text class="win-text">🎉 2048!</text>
+      <text class="win-text">2048!</text>
       <text class="win-subtext">胜利!</text>
       <text class="win-score">得分: {{ score }}</text>
       <input type="button" class="continue-btn" value="继续挑战" onclick="continueGame" />
@@ -50,7 +50,7 @@
     </div>
 
     <div class="about-overlay" if="{{ showAbout }}">
-      <image class="about-logo" src="../../common/logo.png" />
+      <image class="about-logo" src="/common/logo.png" />
       <text class="about-title">关于</text>
       <text class="about-name">Infinite-2048</text>
       <text class="about-desc">小米手表2048游戏</text>
@@ -70,8 +70,6 @@ export default {
     showWin: false,
     showAbout: false,
     hasWonOnce: false,
-    touchStartX: 0,
-    touchStartY: 0,
     isAnimating: false,
     gridSize: 4,
   },
@@ -144,47 +142,14 @@ export default {
     return `color: ${colors.text}; font-size: ${fontSize}px;`
   },
 
-  handleTouchStart(e) {
+  handleSwipe(e) {
     if (this.isAnimating || this.isGameOver || this.showAbout) return
-    if (!e.touches || e.touches.length === 0 || typeof e.touches[0].x !== 'number' || typeof e.touches[0].y !== 'number') return
-    this.touchStartX = e.touches[0].x
-    this.touchStartY = e.touches[0].y
-  },
-
-  handleTouchEnd(e) {
-    if (this.isAnimating || this.isGameOver || this.showAbout) return
-    if (!e.changedTouches || e.changedTouches.length === 0 || typeof e.changedTouches[0].x !== 'number' || typeof e.changedTouches[0].y !== 'number') return
-    const touchEndX = e.changedTouches[0].x
-    const touchEndY = e.changedTouches[0].y
-    this.detectSwipeDirection(touchEndX, touchEndY)
+    if (!e || !e.direction) return
+    this.move(e.direction)
   },
 
   toggleAbout() {
     this.showAbout = !this.showAbout
-  },
-
-  detectSwipeDirection(endX, endY) {
-    const dx = endX - this.touchStartX
-    const dy = endY - this.touchStartY
-    const minSwipeDistance = 20
-
-    if (Math.abs(dx) < minSwipeDistance && Math.abs(dy) < minSwipeDistance) {
-      return
-    }
-
-    if (Math.abs(dx) > Math.abs(dy)) {
-      if (dx > 0) {
-        this.move('right')
-      } else {
-        this.move('left')
-      }
-    } else {
-      if (dy > 0) {
-        this.move('down')
-      } else {
-        this.move('up')
-      }
-    }
   },
 
   move(direction) {
@@ -305,7 +270,11 @@ export default {
   },
 
   exitGame() {
-    this.$app.exit()
+    try {
+      this.$app.exit()
+    } catch (e) {
+      console.error('exit game error:', e)
+    }
   }
 }
 </script>
@@ -439,12 +408,12 @@ export default {
 }
 
 .game-over-overlay {
-  position: absolute;
+  position: fixed;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: rgba(238, 228, 218, 0.9);
+  background-color: #EEE4DA;
   justify-content: center;
   align-items: center;
   flex-direction: column;
@@ -478,12 +447,12 @@ export default {
 }
 
 .win-overlay {
-  position: absolute;
+  position: fixed;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: rgba(237, 194, 46, 0.9);
+  background-color: #EDCF72;
   justify-content: center;
   align-items: center;
   flex-direction: column;
@@ -537,12 +506,12 @@ export default {
 }
 
 .about-overlay {
-  position: absolute;
+  position: fixed;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: rgba(250, 248, 239, 0.95);
+  background-color: #FAF8EF;
   justify-content: center;
   align-items: center;
   flex-direction: column;

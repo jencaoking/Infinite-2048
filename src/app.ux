@@ -10,6 +10,9 @@ export default {
   },
   getData(key) {
     try {
+      if (typeof App.getStorageSync !== 'function') {
+        return 0
+      }
       const value = App.getStorageSync(key)
       return value !== undefined && value !== null ? value : 0
     } catch (e) {
@@ -19,6 +22,9 @@ export default {
   },
   setData(key, value) {
     try {
+      if (typeof App.setStorageSync !== 'function') {
+        return
+      }
       App.setStorageSync(key, value)
     } catch (e) {
       console.error('setData error:', e)
@@ -29,6 +35,15 @@ export default {
   },
   setBestScore(score) {
     this.setData(STORAGE_KEY_BEST_SCORE, score)
+  },
+  exit() {
+    try {
+      if (typeof App.exit === 'function') {
+        App.exit()
+      }
+    } catch (e) {
+      console.error('exit error:', e)
+    }
   }
 }
 </script>
