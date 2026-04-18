@@ -1,0 +1,426 @@
+<template>
+  <div class="game-container" on touchstart="handleTouchStart" on touchend="handleTouchEnd">
+    <div class="header">
+      <div class="score-box">
+        <text class="score-label">分数</text>
+        <text class="score-value">{{ score }}</text>
+      </div>
+      <div class="score-box best">
+        <text class="score-label">最高</text>
+        <text class="score-value">{{ bestScore }}</text>
+      </div>
+    </div>
+
+    <div class="game-board">
+      <div class="cell" for="{{(i, row) in grid}}" for="row">
+        <div class="cell-inner" for="{{(j, val) in row}}" for="val">
+          <div
+            class="tile"
+            style="{{ getTileStyle(val, i, j) }}"
+          >
+            <text class="tile-value" style="{{ getTileTextStyle(val) }}">{{ val > 0 ? val : '' }}</text>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer">
+      <input type="button" class="reset-btn" value="重新开始" onclick="resetGame" />
+    </div>
+
+    <div class="game-over-overlay" if="{{ isGameOver }}">
+      <text class="game-over-text">游戏结束</text>
+      <text class="final-score">得分: {{ score }}</text>
+      <input type="button" class="overlay-btn" value="再玩一次" onclick="resetGame" />
+    </div>
+
+    <div class="win-overlay" if="{{ showWin }}">
+      <text class="win-text">🎉 20480! 胜利!</text>
+      <text class="win-score">得分: {{ score }}</text>
+    </div>
+  </div>
+</template>
+
+<script>
+export default {
+  private: {
+    grid: [[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]],
+    score: 0,
+    bestScore: 0,
+    isGameOver: false,
+    showWin: false,
+    hasWonOnce: false,
+    touchStartX: 0,
+    touchStartY: 0,
+    isAnimating: false,
+    gridStyle: []
+  },
+
+  tileColors: {
+    2: { bg: '#EEE4DA', text: '#776E65' },
+    4: { bg: '#EDE0C8', text: '#776E65' },
+    8: { bg: '#F2B179', text: '#F9F6F2' },
+    16: { bg: '#F59563', text: '#F9F6F2' },
+    32: { bg: '#F67C5F', text: '#F9F6F2' },
+    64: { bg: '#F65E3B', text: '#F9F6F2' },
+    128: { bg: '#EDCF72', text: '#F9F6F2' },
+    256: { bg: '#EDCC61', text: '#F9F6F2' },
+    512: { bg: '#EDC850', text: '#F9F6F2' },
+    1024: { bg: '#EDC53F', text: '#F9F6F2' },
+    2048: { bg: '#EDC22E', text: '#F9F6F2' },
+    4096: { bg: '#3C3A32', text: '#F9F6F2' },
+    8192: { bg: '#1E1C14', text: '#F9F6F2' },
+    16384: { bg: '#F65E3B', text: '#F9F6F2' },
+    20480: { bg: '#FFD700', text: '#776E65' }
+  },
+
+  onInit() {
+    this.initGame()
+  },
+
+  initGame() {
+    this.grid = [[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]]
+    this.score = 0
+    this.isGameOver = false
+    this.showWin = false
+    this.hasWonOnce = false
+    this.addRandomTile()
+    this.addRandomTile()
+    this.updateGridStyle()
+  },
+
+  addRandomTile() {
+    const emptyCells = []
+    for (let i = 0; i < 4; i++) {
+      for (let j = 0; j < 4; j++) {
+        if (this.grid[i][j] === 0) {
+          emptyCells.push({ i, j })
+        }
+      }
+    }
+    if (emptyCells.length > 0) {
+      const cell = emptyCells[Math.floor(Math.random() * emptyCells.length)]
+      this.grid[cell.i][cell.j] = Math.random() < 0.9 ? 2 : 4
+      this.updateGridStyle()
+    }
+  },
+
+  getTileStyle(value, row, col) {
+    if (value === 0) {
+      return `background-color: #CDC1B4;`
+    }
+    const colors = this.tileColors[value] || { bg: '#CDC1B4', text: '#F9F6F2' }
+    return `background-color: ${colors.bg};`
+  },
+
+  getTileTextStyle(value) {
+    if (value === 0) return ''
+    const colors = this.tileColors[value] || { bg: '#CDC1B4', text: '#F9F6F2' }
+    let fontSize = 24
+    if (value >= 1000) fontSize = 18
+    if (value >= 10000) fontSize = 14
+    return `color: ${colors.text}; font-size: ${fontSize}px;`
+  },
+
+  updateGridStyle() {
+    const newStyle = []
+    for (let i = 0; i < 4; i++) {
+      const rowStyle = []
+      for (let j = 0; j < 4; j++) {
+        rowStyle.push(this.getTileStyle(this.grid[i][j], i, j))
+      }
+      newStyle.push(rowStyle)
+    }
+    this.gridStyle = newStyle
+  },
+
+  handleTouchStart(e) {
+    if (this.isAnimating || this.isGameOver) return
+    this.touchStartX = e.touches[0].x
+    this.touchStartY = e.touches[0].y
+  },
+
+  handleTouchEnd(e) {
+    if (this.isAnimating || this.isGameOver) return
+    const touchEndX = e.changedTouches[0].x
+    const touchEndY = e.changedTouches[0].y
+    this.detectSwipeDirection(touchEndX, touchEndY)
+  },
+
+  detectSwipeDirection(endX, endY) {
+    const dx = endX - this.touchStartX
+    const dy = endY - this.touchStartY
+    const minSwipeDistance = 30
+
+    if (Math.abs(dx) < minSwipeDistance && Math.abs(dy) < minSwipeDistance) {
+      return
+    }
+
+    if (Math.abs(dx) > Math.abs(dy)) {
+      if (dx > 0) {
+        this.move('right')
+      } else {
+        this.move('left')
+      }
+    } else {
+      if (dy > 0) {
+        this.move('down')
+      } else {
+        this.move('up')
+      }
+    }
+  },
+
+  move(direction) {
+    if (this.isAnimating) return
+
+    let moved = false
+    const oldGrid = JSON.stringify(this.grid)
+
+    if (direction === 'left' || direction === 'right') {
+      for (let i = 0; i < 4; i++) {
+        const row = this.grid[i].slice()
+        const result = this.processLine(row, direction === 'right')
+        if (JSON.stringify(this.grid[i]) !== JSON.stringify(result)) {
+          moved = true
+        }
+        this.grid[i] = result
+      }
+    } else {
+      for (let j = 0; j < 4; j++) {
+        const col = [this.grid[0][j], this.grid[1][j], this.grid[2][j], this.grid[3][j]]
+        const result = this.processLine(col, direction === 'down')
+        for (let i = 0; i < 4; i++) {
+          if (this.grid[i][j] !== result[i]) {
+            moved = true
+          }
+          this.grid[i][j] = result[i]
+        }
+      }
+    }
+
+    if (moved) {
+      this.isAnimating = true
+      setTimeout(() => {
+        this.addRandomTile()
+        this.checkWin()
+        if (!this.canMove()) {
+          this.isGameOver = true
+        }
+        this.isAnimating = false
+      }, 100)
+    }
+    this.updateGridStyle()
+  },
+
+  processLine(line, reverse) {
+    let arr = reverse ? line.slice().reverse() : line.slice()
+    arr = this.compact(arr)
+    arr = this.merge(arr)
+    arr = this.compact(arr)
+    return reverse ? arr.reverse() : arr
+  },
+
+  compact(arr) {
+    return arr.filter(val => val !== 0)
+  },
+
+  merge(arr) {
+    const result = []
+    let i = 0
+    while (i < arr.length) {
+      if (i + 1 < arr.length && arr[i] === arr[i + 1]) {
+        const merged = arr[i] * 2
+        result.push(merged)
+        this.score += merged
+        if (this.score > this.bestScore) {
+          this.bestScore = this.score
+        }
+        i += 2
+      } else {
+        result.push(arr[i])
+        i += 1
+      }
+    }
+    while (result.length < 4) {
+      result.push(0)
+    }
+    return result
+  },
+
+  canMove() {
+    for (let i = 0; i < 4; i++) {
+      for (let j = 0; j < 4; j++) {
+        if (this.grid[i][j] === 0) return true
+        if (j < 3 && this.grid[i][j] === this.grid[i][j + 1]) return true
+        if (i < 3 && this.grid[i][j] === this.grid[i + 1][j]) return true
+      }
+    }
+    return false
+  },
+
+  checkWin() {
+    if (this.hasWonOnce) return
+    for (let i = 0; i < 4; i++) {
+      for (let j = 0; j < 4; j++) {
+        if (this.grid[i][j] >= 20480) {
+          this.hasWonOnce = true
+          this.showWin = true
+          setTimeout(() => {
+            this.showWin = false
+          }, 3000)
+          return
+        }
+      }
+    }
+  },
+
+  resetGame() {
+    this.initGame()
+  }
+}
+</script>
+
+<style>
+.game-container {
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  height: 100%;
+  background-color: #FAF8EF;
+  padding: 10px;
+}
+
+.header {
+  flex-direction: row;
+  justify-content: space-between;
+  width: 192px;
+  margin-bottom: 10px;
+}
+
+.score-box {
+  background-color: #BBC4C9;
+  border-radius: 8px;
+  padding: 8px 16px;
+  align-items: center;
+}
+
+.score-box.best {
+  background-color: #BBC4C9;
+}
+
+.score-label {
+  font-size: 12px;
+  color: #EEE4DA;
+}
+
+.score-value {
+  font-size: 18px;
+  font-weight: bold;
+  color: #FFFFFF;
+}
+
+.game-board {
+  flex-direction: column;
+  background-color: #BBADA0;
+  border-radius: 12px;
+  padding: 8px;
+  width: 192px;
+  height: 192px;
+}
+
+.cell {
+  flex-direction: row;
+  width: 100%;
+}
+
+.cell-inner {
+  flex: 1;
+  padding: 4px;
+}
+
+.tile {
+  flex: 1;
+  justify-content: center;
+  align-items: center;
+  border-radius: 6px;
+  background-color: #CDC1B4;
+}
+
+.tile-value {
+  font-size: 24px;
+  font-weight: bold;
+  color: #776E65;
+}
+
+.footer {
+  margin-top: 16px;
+}
+
+.reset-btn {
+  width: 120px;
+  height: 36px;
+  background-color: #8F7A66;
+  color: #F9F6F2;
+  font-size: 14px;
+  border-radius: 8px;
+}
+
+.game-over-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(238, 228, 218, 0.9);
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+}
+
+.game-over-text {
+  font-size: 28px;
+  font-weight: bold;
+  color: #776E65;
+  margin-bottom: 10px;
+}
+
+.final-score {
+  font-size: 18px;
+  color: #776E65;
+  margin-bottom: 20px;
+}
+
+.overlay-btn {
+  width: 120px;
+  height: 40px;
+  background-color: #8F7A66;
+  color: #F9F6F2;
+  font-size: 16px;
+  border-radius: 8px;
+}
+
+.win-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(237, 194, 46, 0.9);
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+}
+
+.win-text {
+  font-size: 22px;
+  font-weight: bold;
+  color: #776E65;
+  margin-bottom: 10px;
+}
+
+.win-score {
+  font-size: 16px;
+  color: #776E65;
+}
+</style>

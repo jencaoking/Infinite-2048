@@ -1,0 +1,9 @@
+{
+  "screenShape": "rect",
+  "screenWidth": 212,
+  "screenHeight": 520,
+  "touchable": true,
+  "statusbar": {
+    "show": false
+  }
+}

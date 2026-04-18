@@ -1,0 +1,10 @@
+<script>
+export default {
+  onCreate() {
+    console.info('Infinite-2048 app created')
+  },
+  onDestroy() {
+    console.info('Infinite-2048 app destroyed')
+  }
+}
+</script>
