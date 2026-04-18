@@ -1,5 +1,5 @@
 <template>
-  <div class="game-container" on touchstart="handleTouchStart" on touchend="handleTouchEnd">
+  <div class="game-container" ontouchstart="handleTouchStart" ontouchend="handleTouchEnd">
     <div class="header">
       <div class="score-box">
         <text class="score-label">分数</text>
@@ -16,7 +16,7 @@
         <div class="cell-inner" for="{{(j, val) in row}}" for="val">
           <div
             class="tile"
-            style="{{ getTileStyle(val, i, j) }}"
+            style="{{ getTileStyle(val) }}"
           >
             <text class="tile-value" style="{{ getTileTextStyle(val) }}">{{ val > 0 ? val : '' }}</text>
           </div>
@@ -105,7 +105,7 @@ export default {
     }
   },
 
-  getTileStyle(value, row, col) {
+  getTileStyle(value) {
     if (value === 0) {
       return `background-color: #CDC1B4;`
     }
@@ -127,7 +127,7 @@ export default {
     for (let i = 0; i < 4; i++) {
       const rowStyle = []
       for (let j = 0; j < 4; j++) {
-        rowStyle.push(this.getTileStyle(this.grid[i][j], i, j))
+        rowStyle.push(this.getTileStyle(this.grid[i][j]))
       }
       newStyle.push(rowStyle)
     }
@@ -175,7 +175,6 @@ export default {
     if (this.isAnimating) return
 
     let moved = false
-    const oldGrid = JSON.stringify(this.grid)
 
     if (direction === 'left' || direction === 'right') {
       for (let i = 0; i < 4; i++) {
