@@ -87,6 +87,7 @@ export default {
     this.isGameOver = false
     this.showWin = false
     this.hasWonOnce = false
+    this.isAnimating = false
     this.addRandomTile()
     this.addRandomTile()
     this.updateGridStyle()
@@ -175,7 +176,7 @@ export default {
   },
 
   move(direction) {
-    if (this.isAnimating) return
+    if (this.isAnimating || this.isGameOver) return
 
     let moved = false
 
@@ -202,24 +203,22 @@ export default {
     }
 
     if (moved) {
-      this.isAnimating = true
-      setTimeout(() => {
-        this.addRandomTile()
-        this.checkWin()
-        if (!this.canMove()) {
-          this.isGameOver = true
-        }
-        this.isAnimating = false
-      }, 100)
+      this.addRandomTile()
+      this.checkWin()
+      if (!this.canMove()) {
+        this.isGameOver = true
+      }
+      this.updateGridStyle()
     }
-    this.updateGridStyle()
   },
 
   processLine(line, reverse) {
     let arr = reverse ? line.slice().reverse() : line.slice()
     arr = this.compact(arr)
     arr = this.merge(arr)
-    arr = this.compact(arr)
+    while (arr.length < 4) {
+      arr.push(0)
+    }
     return reverse ? arr.reverse() : arr
   },
 
@@ -243,9 +242,6 @@ export default {
         result.push(arr[i])
         i += 1
       }
-    }
-    while (result.length < 4) {
-      result.push(0)
     }
     return result
   },
