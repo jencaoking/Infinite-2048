@@ -94,6 +94,7 @@ export default {
   },
 
   onInit() {
+    this.bestScore = this.$app.getBestScore()
     this.initGame()
   },
 
@@ -283,6 +284,7 @@ export default {
         this.score += merged
         if (this.score > this.bestScore) {
           this.bestScore = this.score
+          this.$app.setBestScore(this.bestScore)
         }
         i += 2
       } else {
@@ -364,9 +366,6 @@ export default {
   padding: 4px 8px;
   align-items: center;
   min-width: 60px;
-}
-
-.score-box.best {
 }
 
 .score-label {
