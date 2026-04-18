@@ -205,7 +205,7 @@ export default {
       }
     } else {
       for (let j = 0; j < size; j++) {
-        const col = [this.grid[0][j], this.grid[1][j], this.grid[2][j], this.grid[3][j]]
+        const col = Array.from({ length: size }, (_, i) => this.grid[i][j])
         const result = this.processLine(col, direction === 'down')
         for (let i = 0; i < size; i++) {
           if (this.grid[i][j] !== result[i]) {
