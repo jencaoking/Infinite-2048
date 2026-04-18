@@ -1,31 +1,33 @@
 <template>
   <div class="game-container" ontouchstart="handleTouchStart" ontouchend="handleTouchEnd">
-    <div class="header">
-      <div class="score-box">
-        <text class="score-label">分数</text>
-        <text class="score-value">{{ score }}</text>
+    <div class="grid-wrapper">
+      <div class="header">
+        <div class="score-box">
+          <text class="score-label">分数</text>
+          <text class="score-value">{{ score }}</text>
+        </div>
+        <div class="score-box best">
+          <text class="score-label">最高</text>
+          <text class="score-value">{{ bestScore }}</text>
+        </div>
       </div>
-      <div class="score-box best">
-        <text class="score-label">最高</text>
-        <text class="score-value">{{ bestScore }}</text>
-      </div>
-    </div>
 
-    <div class="game-board">
-      <div class="cell" for="{{(i, row) in grid}}" for="row">
-        <div class="cell-inner" for="{{(j, val) in row}}" for="val">
-          <div
-            class="tile"
-            style="{{ getTileStyle(val) }}"
-          >
-            <text class="tile-value" style="{{ getTileTextStyle(val) }}">{{ val > 0 ? val : '' }}</text>
+      <div class="game-board">
+        <div class="cell" for="{{(i, row) in grid}}" for="row">
+          <div class="cell-inner" for="{{(j, val) in row}}" for="val">
+            <div
+              class="tile"
+              style="{{ getTileStyle(val) }}"
+            >
+              <text class="tile-value" style="{{ getTileTextStyle(val) }}">{{ val > 0 ? val : '' }}</text>
+            </div>
           </div>
         </div>
       </div>
-    </div>
 
-    <div class="footer">
-      <input type="button" class="reset-btn" value="重新开始" onclick="resetGame" />
+      <div class="footer">
+        <input type="button" class="reset-btn" value="重新开始" onclick="resetGame" />
+      </div>
     </div>
 
     <div class="game-over-overlay" if="{{ isGameOver }}">
@@ -282,22 +284,34 @@ export default {
 </script>
 
 <style>
+/* 容器样式修复 */
 .game-container {
-  flex-direction: column;
-  align-items: center;
   width: 100%;
   height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  overflow: visible;
+  padding: 10px;
+  box-sizing: border-box;
   background-color: #FAF8EF;
-  padding: 4px;
-  overflow: hidden;
-  justify-content: flex-start;
+}
+
+/* 网格容器 */
+.grid-wrapper {
+  margin-top: auto;
+  margin-bottom: auto;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 .header {
   flex-direction: row;
   justify-content: space-between;
   width: 160px;
-  margin-top: 4px;
   margin-bottom: 6px;
   z-index: 1;
 }
@@ -457,12 +471,11 @@ export default {
 /* 媒体查询 - 适配小米手环10 1.72英寸屏幕 */
 @media screen and (shape: rect) {
   .game-container {
-    padding: 2px;
+    padding: 6px;
   }
   
   .header {
     width: 150px;
-    margin-top: 2px;
     margin-bottom: 4px;
   }
   
@@ -511,6 +524,10 @@ export default {
 @media screen and (max-height: 520px) {
   .game-container {
     height: 100vh;
+  }
+  
+  .grid-wrapper {
+    flex-shrink: 0;
   }
   
   .game-board {
