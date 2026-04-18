@@ -142,8 +142,8 @@ export default {
 
   handleTouchEnd(e) {
     if (this.isAnimating || this.isGameOver) return
-    const touchEndX = e.touches[0].x
-    const touchEndY = e.touches[0].y
+    const touchEndX = e.changedTouches[0].x
+    const touchEndY = e.changedTouches[0].y
     this.detectSwipeDirection(touchEndX, touchEndY)
   },
 
