@@ -345,6 +345,8 @@ export default {
   align-items: center;
   border-radius: 4px;
   background-color: #CDC1B4;
+  min-width: 40px;
+  min-height: 40px;
 }
 
 .tile-value {
@@ -364,6 +366,8 @@ export default {
   color: #F9F6F2;
   font-size: 12px;
   border-radius: 6px;
+  min-width: 44px;
+  min-height: 44px;
 }
 
 .game-over-overlay {
@@ -398,6 +402,8 @@ export default {
   color: #F9F6F2;
   font-size: 14px;
   border-radius: 6px;
+  min-width: 44px;
+  min-height: 44px;
 }
 
 .win-overlay {
@@ -429,5 +435,43 @@ export default {
 .win-score {
   font-size: 14px;
   color: #776E65;
+}
+
+/* 媒体查询 - 适配小米手环10 1.72英寸屏幕 */
+@media screen and (shape: rect) {
+  .game-container {
+    padding: 6px;
+  }
+  
+  .header {
+    width: 170px;
+    margin-bottom: 6px;
+  }
+  
+  .game-board {
+    width: 170px;
+    height: 170px;
+    padding: 5px;
+  }
+  
+  .tile {
+    min-width: 36px;
+    min-height: 36px;
+  }
+  
+  .tile-value {
+    font-size: 18px;
+  }
+  
+  .reset-btn {
+    width: 90px;
+    height: 30px;
+  }
+}
+
+/* 触摸区域优化 */
+.tile, .reset-btn, .overlay-btn {
+  touch-action: manipulation;
+  user-select: none;
 }
 </style>
