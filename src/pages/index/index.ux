@@ -72,6 +72,7 @@ export default {
     touchStartX: 0,
     touchStartY: 0,
     isAnimating: false,
+    gridSize: 4,
   },
 
   tileColors: {
@@ -97,7 +98,8 @@ export default {
   },
 
   initGame() {
-    this.grid = [[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]]
+    const size = this.gridSize
+    this.grid = Array.from({ length: size }, () => Array(size).fill(0))
     this.score = 0
     this.isGameOver = false
     this.showWin = false
@@ -107,9 +109,10 @@ export default {
   },
 
   addRandomTile() {
+    const size = this.gridSize
     const emptyCells = []
-    for (let i = 0; i < 4; i++) {
-      for (let j = 0; j < 4; j++) {
+    for (let i = 0; i < size; i++) {
+      for (let j = 0; j < size; j++) {
         if (this.grid[i][j] === 0) {
           emptyCells.push({ i, j })
         }
@@ -158,14 +161,6 @@ export default {
     this.showAbout = !this.showAbout
   },
 
-  arraysEqual(a, b) {
-    if (a.length !== b.length) return false
-    for (let k = 0; k < a.length; k++) {
-      if (a[k] !== b[k]) return false
-    }
-    return true
-  },
-
   detectSwipeDirection(endX, endY) {
     const dx = endX - this.touchStartX
     const dy = endY - this.touchStartY
@@ -194,24 +189,31 @@ export default {
     if (this.isGameOver) return
 
     let moved = false
+    const size = this.gridSize
 
     if (direction === 'left' || direction === 'right') {
-      for (let i = 0; i < 4; i++) {
+      for (let i = 0; i < size; i++) {
         const row = this.grid[i].slice()
         const result = this.processLine(row, direction === 'right')
-        if (!this.arraysEqual(this.grid[i], result)) {
-          moved = true
+        for (let j = 0; j < size; j++) {
+          if (this.grid[i][j] !== result[j]) {
+            moved = true
+            break
+          }
         }
         this.grid[i] = result
       }
     } else {
-      for (let j = 0; j < 4; j++) {
+      for (let j = 0; j < size; j++) {
         const col = [this.grid[0][j], this.grid[1][j], this.grid[2][j], this.grid[3][j]]
         const result = this.processLine(col, direction === 'down')
-        for (let i = 0; i < 4; i++) {
+        for (let i = 0; i < size; i++) {
           if (this.grid[i][j] !== result[i]) {
             moved = true
+            break
           }
+        }
+        for (let i = 0; i < size; i++) {
           this.grid[i][j] = result[i]
         }
       }
@@ -219,18 +221,49 @@ export default {
 
     if (moved) {
       this.addRandomTile()
-      this.checkWin()
-      if (!this.canMove()) {
+      const gameState = this.checkGameState()
+      if (gameState.hasWon && !this.hasWonOnce) {
+        this.hasWonOnce = true
+        this.showWin = true
+      }
+      if (!gameState.canMove) {
         this.isGameOver = true
       }
     }
   },
 
+  checkGameState() {
+    let canMove = false
+    let hasWon = false
+    const size = this.gridSize
+
+    for (let i = 0; i < size; i++) {
+      for (let j = 0; j < size; j++) {
+        const val = this.grid[i][j]
+        if (val === 2048) {
+          hasWon = true
+        }
+        if (val === 0) {
+          canMove = true
+        } else {
+          if (j < size - 1 && this.grid[i][j] === this.grid[i][j + 1]) {
+            canMove = true
+          }
+          if (i < size - 1 && this.grid[i][j] === this.grid[i + 1][j]) {
+            canMove = true
+          }
+        }
+      }
+    }
+    return { canMove, hasWon }
+  },
+
   processLine(line, reverse) {
+    const size = this.gridSize
     let arr = reverse ? line.slice().reverse() : line.slice()
     arr = this.compact(arr)
     arr = this.merge(arr)
-    while (arr.length < 4) {
+    while (arr.length < size) {
       arr.push(0)
     }
     return reverse ? arr.reverse() : arr
@@ -258,30 +291,6 @@ export default {
       }
     }
     return result
-  },
-
-  canMove() {
-    for (let i = 0; i < 4; i++) {
-      for (let j = 0; j < 4; j++) {
-        if (this.grid[i][j] === 0) return true
-        if (j < 3 && this.grid[i][j] === this.grid[i][j + 1]) return true
-        if (i < 3 && this.grid[i][j] === this.grid[i + 1][j]) return true
-      }
-    }
-    return false
-  },
-
-  checkWin() {
-    if (this.hasWonOnce) return
-    for (let i = 0; i < 4; i++) {
-      for (let j = 0; j < 4; j++) {
-        if (this.grid[i][j] === 2048) {
-          this.hasWonOnce = true
-          this.showWin = true
-          return
-        }
-      }
-    }
   },
 
   resetGame() {
@@ -358,7 +367,6 @@ export default {
 }
 
 .score-box.best {
-  background-color: #BBC4C9;
 }
 
 .score-label {
@@ -622,12 +630,6 @@ export default {
   .score-value {
     font-size: 12px;
   }
-}
-
-/* 触摸区域优化 */
-.tile, .reset-btn, .overlay-btn {
-  touch-action: manipulation;
-  user-select: none;
 }
 
 /* 确保在虚拟设备中正确显示 */
